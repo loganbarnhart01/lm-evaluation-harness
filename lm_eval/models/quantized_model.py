@@ -3,15 +3,12 @@ from lm_eval.api.instance import Instance
 from lm_eval.models.hugginface import HFLM
 from lm_eval.api.registry import register_model
 from lm_eval.models.utils import get_dtype
+from typing import List, Literal, Optional, Tuple, Union
 
 import torch
 import accelerate
 import bitsandbytes
 
-from peft import (
-  LoraConfig,
-  get_peft_model,
-)
 
 from transformers import (
   AutoModelForCausalLM,
@@ -52,21 +49,12 @@ class QuantizedHFLM(HFLM):
                     bnb_4bit_quant_type='nf4',
                     bnb_4bit_compute_dtype=torch.bfloat16
                 )
-                lora_config = LoraConfig(
-                    r=16,
-                    lora_alpha=32,
-                    target_modules=["q_proj", "v_proj"],
-                    lora_dropout=0.05,
-                    bias='none',
-                    task_type='causal_LM'
-                )
                 self._model = AutoModelForCausalLM.from_pretrained(
                     pretrained,
                     torch_dtype=get_dtype(dtype),
                     trust_remote_code=trust_remote_code,
                     quantization_config=bnb_config,
                 )
-                self._model = get_peft_model(self._model, lora_config)
             else:
                 super()._create_model(pretrained, revision, dtype, trust_remote_code, parallelize, device_map_option, max_memory_per_gpu, max_cpu_memory, offload_folder, peft, autogptq, **kwargs,)
         else:
